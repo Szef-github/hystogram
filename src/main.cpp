@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 
     // Create input QImage to get pixel data from
     QImage inputImage(params.inputFile);
-    if(inputImage.isNull())
+    if(inputImage.isNull() || inputImage.format() != QImage::Format_RGB32)
     {
         std::cerr << "Invalid input image or unrecognized format" << std::endl;
         return 1;
