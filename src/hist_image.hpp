@@ -1,8 +1,6 @@
 #ifndef HIST_IMAGE_HPP
 #define HIST_IMAGE_HPP
 
-class QImage;
-
 /*! \class HistogramImage
     \brief Output histogram drqwing image class.
 
@@ -13,17 +11,17 @@ class HistogramImage : public QImage
 {
     protected:
         //! Individual bar width in pixels.
-        static constexpr std::size_t barWidth = 3;
+        static const std::size_t barWidth = 3;
         //! Maximum bar height in pixels.
-        static constexpr std::size_t barHeight = 400;
+        static const std::size_t barHeight = 400;
         //! Left indentation area in pixels.
-        static constexpr std::size_t leftIndent = 55;
+        static const std::size_t leftIndent = 55;
         //! Right indentation area in pixels.
-        static constexpr std::size_t rightIndent = 15;
+        static const std::size_t rightIndent = 15;
         //! Top indentation area in pixels.
-        static constexpr std::size_t topIndent = 30;
+        static const std::size_t topIndent = 30;
         //! Bottom indentation area in pixels.
-        static constexpr std::size_t bottomIndent = 35;
+        static const std::size_t bottomIndent = 35;
 
     public:
         /*!

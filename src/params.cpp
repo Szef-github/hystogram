@@ -7,7 +7,10 @@
 
 #include "params.hpp"
 
-CmdLineParams :: CmdLineParams(int defaultThreadsCount) : threadsCount(defaultThreadsCount)
+CmdLineParams :: CmdLineParams(std::size_t defaultMaxMem,  int defaultThreadsCount) :
+                    maxMem(defaultMaxMem),
+                    threadsCount(defaultThreadsCount),
+                    verbose(false)
 {
 }
 
@@ -17,7 +20,8 @@ void CmdLineParams :: printUsage(void)
                  std::endl <<
                  "Options:" << std::endl <<
                  "\t -h, --help\t Print this help" << std::endl <<
-                 "\t -n N\t\t Set thread count to N [1-32] (default is system dependent)" << std::endl;
+                 "\t -n N\t\t Set thread count to N [1-32] (default is system dependent)" <<
+                 "\t -m M\t\t Set maximum memory to M Mbytes (default is 1024)" << std::endl;
 }
 
 int CmdLineParams :: update(void)
@@ -25,6 +29,7 @@ int CmdLineParams :: update(void)
     // Parse parameters one-by-one
     QString appName;
     QString threadsString;
+    QString memString;
     QString* option = nullptr;
     foreach(QString arg, QCoreApplication :: arguments())
     {
@@ -38,8 +43,12 @@ int CmdLineParams :: update(void)
             printUsage();
             return 0;
         }
+        else if((arg == "-v") || (arg == "--verbose"))
+            verbose = true;
         else if(arg == "-n")
             option = &threadsString;
+        else if(arg == "-m")
+            option = &memString;
         else if(appName.isEmpty())
             appName = arg;
         else if(inputFile.isEmpty())
@@ -67,6 +76,21 @@ int CmdLineParams :: update(void)
         }
 
         threadsCount = nThreads;
+    }
+
+    // Check if memory usage is correct
+    if(!memString.isEmpty())
+    {
+        bool ok;
+        int mem = memString.toInt(&ok);
+        if(!ok || (mem < 1))
+        {
+            std::cerr << "Invalid maximum memory (" << memString.toLocal8Bit().data() << ")" << std::endl;
+            printUsage();
+            return -1;
+        }
+
+        maxMem = mem;
     }
 
     // Check if input and output filename supplied and correct

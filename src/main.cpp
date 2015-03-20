@@ -1,6 +1,6 @@
 #include <QtCore/QString>
 #include <QtGui/QApplication>
-#include <QtGui/QImage>
+#include <QtGui/QImageReader>
 
 #include <algorithm>
 #include <cassert>
@@ -9,6 +9,7 @@
 #include <thread>
 #include <utility>
 
+#include "input_image.hpp"
 #include "hist_data.hpp"
 #include "hist_image.hpp"
 #include "luminance.hpp"
@@ -21,49 +22,34 @@ int main(int argc, char *argv[])
     Q_UNUSED(a);
 
     // Parse input params
-    CmdLineParams params(std::thread::hardware_concurrency());
+    CmdLineParams params(1024, std::thread::hardware_concurrency());
     int rc = params.update();
     if(rc <= 0)
         return -rc;
 
-    // Create input QImage to get pixel data from
-    QImage inputImage(params.inputFile);
-    if(inputImage.isNull() || inputImage.format() != QImage::Format_RGB32)
+    // Create input image object to get region series from
+    InputImage inputImage(params.inputFile, params.maxMem, params.threadsCount);
+    if(!inputImage.valid())
     {
         std::cerr << "Invalid input image or unrecognized format" << std::endl;
         return 1;
     }
-    auto pixels = reinterpret_cast<const QRgb*>(inputImage.constBits());
-    auto pixelsSize = inputImage.size().height() * inputImage.size().width();
-    auto blockSize = pixelsSize / params.threadsCount;
 
-    // Timer start
-    auto start = std::chrono::high_resolution_clock::now();
-
-    // Preparing for threading
-    typedef std::future<HistogramData> AsuncResult;
-    std::list<AsuncResult> results;
-    for(auto i=0; i<params.threadsCount; i++)
-    {
-        // Each thread get its own block of pixels
-        auto from = pixels + i * blockSize;
-        auto to = (i < params.threadsCount - 1) ? (pixels + (i + 1) * blockSize) : (pixels + pixelsSize);
-        // Start threads
-        results.push_back(std::forward<AsuncResult> (std::async(std::launch::async, LuminanceFromRGB(), std::vector<QRgb>(from, to))));
-    }
+    // Start threads
+    typedef std::future<HistogramData> AsyncResult;
+    std::list<AsyncResult> results;
+    for(auto x=0; x<params.threadsCount; x++)
+        results.emplace_back(std::async(std::launch::async, LuminanceFromImage(),
+                                        std::cref(params.inputFile),
+                                        inputImage.getThreadRects(x), x));
 
     // Obtain individual thread results and accumulate them
     HistogramData accData(histogramSize, 0);
-    std::for_each(results.begin(), results.end(), [&accData](AsuncResult& result)
+    std::for_each(results.begin(), results.end(), [&accData](AsyncResult& result)
     {
         accData += result.get();
         return;
     });
-
-    // Timer stop
-    auto stop = std::chrono::high_resolution_clock::now();
-    auto mks = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();
-    std::cout << "Done by " << params.threadsCount << " threads in " << mks << " mks" << std::endl;
 
     // Draw output image
     HistogramImage outputImage;

@@ -23,7 +23,8 @@ void HistogramImage :: draw(const HistogramData& data)
     std::size_t maxCount = *std::max_element(data.begin(), data.end());
     std::size_t normVal = maxCount + topIndent;
 
-    // Calc step
+    // Calc step for levels
+    // Choose from 1,2,5 with appropriate power
     std::size_t step = 1;
     if(normVal > 5)
     {
@@ -79,12 +80,12 @@ void HistogramImage :: draw(const HistogramData& data)
         return;
     });
 
-    // Generate luminas
+    // Generate luminance vector
     std::vector<std::size_t> luminas(6);
     n = 0;
     std::generate(luminas.begin(), luminas.end(), [&](void){ return 50 * n++; });
 
-    // Draw lumina marks
+    // Draw luminance marks
     std::for_each(luminas.begin(), luminas.end(), [&](std::size_t lumina)
     {
         QString str = QString :: number(lumina);

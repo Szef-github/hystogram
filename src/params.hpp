@@ -19,15 +19,20 @@ class CmdLineParams
         QString inputFile;
         //! Output file name.
         QString outputFile;
+        //! Maximum memory usage.
+        std::size_t maxMem;
         //! Parallel threads count.
         int threadsCount;
+        //! Verbose logging.
+        bool verbose;
 
     public:
         /*!
-         * \brief Constructor with default value for threads count supplyed.
-         * \param defaultThreadsCount default threads count.
+         * \brief Constructor with default value for maximum memory and threads count supplyed.
+         * \param defaultMaxMem Default maximum memory.
+         * \param defaultThreadsCount Default threads count.
          */
-        CmdLineParams(int defaultThreadsCount);
+        CmdLineParams(std::size_t defaultMaxMem,  int defaultThreadsCount);
 
     protected:
         void printUsage(void);
